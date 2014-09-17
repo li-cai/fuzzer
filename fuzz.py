@@ -2,13 +2,16 @@ import sys
 import requests
 import bs4
 
+extensions = ['.html', '.jsp', 'php', '.asp', '.htm', '.css', '.js', \
+              '.php5', '.xhtml', '.dll']
 
 def discover(url, words):
-    print("fuzz round 1 - discover!")
+    print("======================= fuzz round 1 - discover! =======================")
 
     response = requests.get(url);
 
     scrapeLinks(response);
+    guessLinks(url, words);
 
 # Rafa
 def authenticate(response):
@@ -19,13 +22,35 @@ def scrapeLinks(response):
     soup = bs4.BeautifulSoup(response.text);
     anchors = soup.find_all('a');
 
+    print("")
+    print("=================== Links Discovered ===================")
+
     for anchor in anchors:
-        if anchor['href']:
+        if anchor.has_attr('href'):
             print(anchor['href']);
 
 # Cailin
-def guessLinks(response):
-    pass
+def guessLinks(url, words):
+    print("")
+    print("=================== Guessing Links... ===================")
+
+    count = 0
+
+    for word in words:
+        newURL = url + '/' + word
+        response = requests.get(newURL)
+        if (response.status_code == 200):
+            print(newURL)
+            count += 1
+
+        for ext in extensions:
+            newURL = url + '/' + word + "." + ext;
+            response = requests.get(newURL)
+            if (response.status_code == 200):
+                print(newURL)
+                count += 1
+
+    print("Link Guessing Complete: " + str(count) + " Links Guessed")
 
 # Karen
 def scrapeInput(response):
@@ -42,7 +67,7 @@ def scrapeCookies(response):
 
 # TBD - Round 2
 def test(args):
-    print("fuzz round 2 - test!")
+    print("============ fuzz round 2 - test! ============")
 
 
 def printErrorMessage():
@@ -70,8 +95,6 @@ def main():
                     discover(args[2], words)
                 elif args[1] == "test":
                     test(args)
-
-                print(words)
 
             except FileNotFoundError:
                 print(filepath + " was not found.")

@@ -4,3 +4,7 @@ help
 404
 403
 402
+styles
+login
+confirm
+results
