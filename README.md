@@ -5,5 +5,6 @@ A testing tool using the Python Requests library for discovering vulnerabilities
 
 Libraries
 ---------
-    * [Requests](http://docs.python-requests.org/)
-    * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/)
+
+[Requests](http://docs.python-requests.org/)
+[BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/)
