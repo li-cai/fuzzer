@@ -55,23 +55,28 @@ def main():
 
     if len(args) < 4:
         printErrorMessage();
-    elif args[3].find("--common-words") < 0:
-        printErrorMessage();
-    else:
-        filepath = args[3].split("=", 1)[1]
+        return
 
-        try:
-            textfile = open(filepath, 'r')
+    for i in range(3, len(args)):
+        if (args[i].find("--common-words") > -1):
+            filepath = args[3].split("=", 1)[1]
 
-            words = textfile.read().split('\n')
+            try:
+                textfile = open(filepath, 'r')
 
-            if args[1] == "discover":
-                discover(args[2], words);
-            elif args[1] == "test":
-                test(args);
+                words = textfile.read().split('\n')
 
-            print(words)
-        except FileNotFoundError:
-            print(filepath + " was not found.")
+                if args[1] == "discover":
+                    discover(args[2], words)
+                elif args[1] == "test":
+                    test(args)
+
+                print(words)
+
+            except FileNotFoundError:
+                print(filepath + " was not found.")
+
+        elif (args[i].find("--custom-auth") > -1):
+            pass
 
 main();
