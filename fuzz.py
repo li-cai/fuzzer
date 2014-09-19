@@ -3,7 +3,7 @@ import requests
 import bs4
 
 extensions = ['.html', '.jsp', 'php', '.asp', '.htm', '.css', '.js', \
-              '.php5', '.xhtml', '.dll']
+              '.xhtml', '.dll']
 
 def discover(url, words):
     print("======================= fuzz round 1 - discover! =======================")
@@ -50,7 +50,7 @@ def guessLinks(url, words):
                 print(newURL)
                 count += 1
 
-    print("Link Guessing Complete: " + str(count) + " Links Guessed")
+    print("========== Link Guessing Complete: " + str(count) + " Links Guessed ==========")
 
 # Karen
 def scrapeInput(response):
