@@ -46,7 +46,7 @@ def guessLinks(url, words):
             count += 1
 
         for ext in extensions:
-            newURL = url + '/' + word + "." + ext;
+            newURL = url + '/' + word + ext;
             response = requests.get(newURL)
             if (response.status_code == 200):
                 print(newURL)
