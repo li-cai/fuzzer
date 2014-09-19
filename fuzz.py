@@ -16,8 +16,8 @@ def discover(url, words):
     scrapeCookies(response);
 
 # Rafa
-def authenticate(response):
-    pass
+def authenticate(url):
+    print(requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password')));
 
 #Cailin
 def scrapeLinks(response):
@@ -92,9 +92,9 @@ def main():
         printErrorMessage();
         return
 
-    for i in range(3, len(args)):
+    for i in range(2, len(args)):
         if (args[i].find("--common-words") > -1):
-            filepath = args[3].split("=", 1)[1]
+            filepath = args[i].split("=", 1)[1]
 
             try:
                 textfile = open(filepath, 'r')
@@ -110,6 +110,6 @@ def main():
                 print(filepath + " was not found.")
 
         elif (args[i].find("--custom-auth") > -1):
-            pass
+            authenticate(args[2]);
 
 main();
