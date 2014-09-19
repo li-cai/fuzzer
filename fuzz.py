@@ -13,6 +13,7 @@ def discover(url, words):
 
     scrapeLinks(response);
     guessLinks(url, words);
+    scrapeInput(response);
     scrapeCookies(response);
 
 # Rafa
@@ -56,7 +57,15 @@ def guessLinks(url, words):
 
 # Karen
 def scrapeInput(response):
-    pass
+    soup = bs4.BeautifulSoup(response.text);
+    anchors = soup.find_all('input');
+
+    print("")
+    print("=================== Inputs Discovered ===================")
+
+    for anchor in anchors:
+        if anchor.has_attr('name'):
+            print(anchor['name']);
 
 # Cailin
 def guessInput(response):
