@@ -2,6 +2,7 @@ import sys
 import requests
 import bs4
 
+
 extensions = ['.html', '.jsp', 'php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
@@ -12,6 +13,7 @@ def discover(url, words):
 
     scrapeLinks(response);
     guessLinks(url, words);
+    scrapeCookies(response);
 
 # Rafa
 def authenticate(response):
@@ -64,6 +66,14 @@ def guessInput(response):
 def scrapeCookies(response):
     # Get cookies
     cookies = response.cookies
+
+    # Make a session
+    session = requests.session()
+
+    print("================== Cookies Discovered =====================")
+    for cookie in requests.utils.dict_from_cookiejar(cookies):
+        print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
+    print("================== Cookies Done ===========================")
 
 # TBD - Round 2
 def test(args):
