@@ -1,38 +1,39 @@
 import sys
 import requests
 import bs4
+from urllib.parse import urlparse
 
-
-extensions = ['.html', '.jsp', 'php', '.asp', '.htm', '.css', '.js', \
+extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
-def discover(url, words):
+def discover(url, words, query):
     print("======================= fuzz round 1 - discover! =======================")
 
-    response = requests.get(url);
+    response = requests.get(url)
 
-    scrapeLinks(response);
-    guessLinks(url, words);
-    scrapeInput(response);
-    scrapeCookies(response);
+    scrapeLinks(response)
+    guessLinks(url, words)
+    scrapeInput(response)
+    parseInput(query)
+    scrapeCookies(response)
 
-# Rafa
+
 def authenticate(url):
     print(requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password')));
 
-#Cailin
+
 def scrapeLinks(response):
-    soup = bs4.BeautifulSoup(response.text);
-    anchors = soup.find_all('a');
+    soup = bs4.BeautifulSoup(response.text)
+    anchors = soup.find_all('a')
 
     print("")
     print("=================== Links Discovered ===================")
 
     for anchor in anchors:
         if anchor.has_attr('href'):
-            print(anchor['href']);
+            print(anchor['href'])
 
-# Cailin
+
 def guessLinks(url, words):
     print("")
     print("=================== Guessing Links... ===================")
@@ -55,23 +56,34 @@ def guessLinks(url, words):
 
     print("========== Link Guessing Complete: " + str(count) + " Links Guessed ==========")
 
-# Karen
+
 def scrapeInput(response):
-    soup = bs4.BeautifulSoup(response.text);
-    anchors = soup.find_all('input');
+    soup = bs4.BeautifulSoup(response.text)
+    anchors = soup.find_all('input')
 
     print("")
     print("=================== Inputs Discovered ===================")
 
     for anchor in anchors:
         if anchor.has_attr('name'):
-            print(anchor['name']);
+            print(anchor['name'])
 
-# Cailin
-def guessInput(response):
-    pass
 
-# Karen 
+def parseInput(query):
+    print("")
+    print("============== Parsing Input from URL... ==============")
+
+    query = query.split('&')
+
+    for elem in query:
+        qvalues = elem.split('=')
+        print(qvalues[0])
+
+    # payload = {'key1' : 'value1', 'key2': 'value2'}
+    # r = requests.post(url, data=payload)
+    # print(r.status_code)
+
+
 def scrapeCookies(response):
     # Get cookies
     cookies = response.cookies
@@ -79,10 +91,12 @@ def scrapeCookies(response):
     # Make a session
     session = requests.session()
 
+    print("")
     print("================== Cookies Discovered =====================")
     for cookie in requests.utils.dict_from_cookiejar(cookies):
         print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
     print("================== Cookies Done ===========================")
+
 
 # TBD - Round 2
 def test(args):
@@ -98,10 +112,13 @@ def main():
     args = sys.argv
 
     if len(args) < 4:
-        printErrorMessage();
+        printErrorMessage()
         return
 
-    for i in range(2, len(args)):
+    parsed = urlparse(args[2])
+    url = parsed.scheme + '://' + parsed.netloc + parsed.path
+
+    for i in range(3, len(args)):
         if (args[i].find("--common-words") > -1):
             filepath = args[i].split("=", 1)[1]
 
@@ -111,7 +128,7 @@ def main():
                 words = textfile.read().split('\n')
 
                 if args[1] == "discover":
-                    discover(args[2], words)
+                    discover(url, words, parsed.query)
                 elif args[1] == "test":
                     test(args)
 
@@ -119,6 +136,6 @@ def main():
                 print(filepath + " was not found.")
 
         elif (args[i].find("--custom-auth") > -1):
-            authenticate(args[2]);
+            authenticate(url)
 
 main();
