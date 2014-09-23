@@ -12,8 +12,8 @@ def discover(url, words, query, response):
     scrapeLinks(response)
     guessLinks(url, words)
     scrapeInput(response)
-    parseInput(query)
     scrapeCookies(response)
+    parseInput(query)
 
 
 def authenticate(url, appname):
@@ -79,14 +79,74 @@ def guessLinks(url, words):
 
 def scrapeInput(response):
     soup = bs4.BeautifulSoup(response.text)
-    anchors = soup.find_all('input')
+    anchors = soup.find_all('input', {'type':'text'})
 
     print("")
-    print("=================== Inputs Discovered ===================")
+    print("=================== Textboxs Discovered ===================")
 
     for anchor in anchors:
-        if anchor.has_attr('name'):
-            print(anchor['name'])
+        print(anchor['name'])
+    print("================== Textboxs Done ===========================")
+
+    print("")
+    print("=================== Buttons Discovered ===================")
+
+    anchors = soup.find_all('input', {'type':'submit'})
+    for anchor in anchors:
+        value = anchor.get('name')
+        if value:
+            print(value)
+        else:
+            print('Button input has no name')
+    print("================== Buttons Done ===========================")
+
+    print("")
+    print("=================== Radio Buttons Discovered ===================")
+
+    anchors = soup.find_all('input', {'type':'radio'})
+    for anchor in anchors:
+        value = anchor.get('name')
+        if value:
+            print(value)
+        else:
+            print('Radio Button input has no name')
+    print("================== Radio Buttons Done ===========================")
+
+    print("")
+    print("=================== Passwords Discovered ===================")
+
+    anchors = soup.find_all('input', {'type':'password'})
+    for anchor in anchors:
+        value = anchor.get('name')
+        if value:
+            print(value)
+        else:
+            print('Password input has no name')
+    print("================== Passwords Done ===========================")
+
+    print("")
+    print("=================== Checkboxes Discovered ===================")
+
+    anchors = soup.find_all('input', {'type':'checkbox'})
+    for anchor in anchors:
+        value = anchor.get('name')
+        if value:
+            print(value)
+        else:
+            print('Checkbox input has no name')
+    print("================== Checkboxes Done ===========================")
+
+    print("")
+    print("=================== Hidden Inputs Discovered ===================")
+
+    anchors = soup.find_all('input', {'type':'hidden'})
+    for anchor in anchors:
+        value = anchor.get('name')
+        if value:
+            print(value)
+        else:
+            print('Hidden input has no name')
+    print("================== Hidden Inputs Done ===========================")
 
 
 def parseInput(query):
