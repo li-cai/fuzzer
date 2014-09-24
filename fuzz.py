@@ -36,11 +36,6 @@ def authenticate(url, appname):
         print("Please specify 'dvwa' or 'bodgeit' for --custom-auth")
 
 
-    #r = requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password'), allow_redirects=True);
-    #print(r);
-    #print(r.url);
-
-
 def scrapeLinks(response):
     soup = bs4.BeautifulSoup(response.text)
     anchors = soup.find_all('a')
@@ -71,90 +66,58 @@ def guessLinks(url, words):
             response = requests.get(newURL)
             if (response.status_code == 200):
                 print(newURL)
-                count += 1
 
     print("========== Link Guessing Complete: " + str(count) + " Links Guessed ==========")
 
 
 def scrapeInput(response):
     soup = bs4.BeautifulSoup(response.text)
-    anchors = soup.find_all('input', {'type':'text'})
-
-    print("")
-    print("=================== Textboxs Discovered ===================")
 
     print("============== Inputs Discovered ===================") 
     
     anchors = soup.find_all('input', {'type':'text'})
     for anchor in anchors:
-        print(anchor['name'])
-    print("================== Textboxs Done ===========================")
-
-    print("")
-    print("=================== Buttons Discovered ===================")
         print(anchor['name'] + " : Textbox")
 
     anchors = soup.find_all('input', {'type':'submit'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
-            print(value)
             print(value + " : Button")
         else:
             print('Button input has no name')
-    print("================== Buttons Done ===========================")
-
-    print("")
-    print("=================== Radio Buttons Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'radio'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
-            print(value)
             print(value + " : Radio Button")
         else:
             print('Radio Button input has no name')
-    print("================== Radio Buttons Done ===========================")
-
-    print("")
-    print("=================== Passwords Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'password'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
-            print(value)
             print(value + " : Password")
         else:
             print('Password input has no name')
-    print("================== Passwords Done ===========================")
-
-    print("")
-    print("=================== Checkboxes Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'checkbox'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
-            print(value)
             print(value + " : Checkbox")
         else:
             print('Checkbox input has no name')
-    print("================== Checkboxes Done ===========================")
-
-    print("")
-    print("=================== Hidden Inputs Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'hidden'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
-            print(value)
             print(value + " : Hidden Input")
         else:
             print('Hidden input has no name')
-    print("================== Hidden Inputs Done ===========================")
 
     print("============= Inputs Done =====================")
 
@@ -168,7 +131,6 @@ def parseInput(query):
         qvalues = elem.split('=')
         if len(qvalues) > 1:
             print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
-
 
 def scrapeCookies(response):
     # Get cookies
@@ -226,3 +188,4 @@ def main():
             appname = args[i].split("=", 1)[1]
             response = authenticate(url, appname)
 
+main()
