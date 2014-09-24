@@ -83,18 +83,23 @@ def scrapeInput(response):
     print("")
     print("=================== Textboxs Discovered ===================")
 
+    print("============== Inputs Discovered ===================") 
+    
+    anchors = soup.find_all('input', {'type':'text'})
     for anchor in anchors:
         print(anchor['name'])
     print("================== Textboxs Done ===========================")
 
     print("")
     print("=================== Buttons Discovered ===================")
+        print(anchor['name'] + " : Textbox")
 
     anchors = soup.find_all('input', {'type':'submit'})
     for anchor in anchors:
         value = anchor.get('name')
         if value:
             print(value)
+            print(value + " : Button")
         else:
             print('Button input has no name')
     print("================== Buttons Done ===========================")
@@ -107,6 +112,7 @@ def scrapeInput(response):
         value = anchor.get('name')
         if value:
             print(value)
+            print(value + " : Radio Button")
         else:
             print('Radio Button input has no name')
     print("================== Radio Buttons Done ===========================")
@@ -119,6 +125,7 @@ def scrapeInput(response):
         value = anchor.get('name')
         if value:
             print(value)
+            print(value + " : Password")
         else:
             print('Password input has no name')
     print("================== Passwords Done ===========================")
@@ -131,6 +138,7 @@ def scrapeInput(response):
         value = anchor.get('name')
         if value:
             print(value)
+            print(value + " : Checkbox")
         else:
             print('Checkbox input has no name')
     print("================== Checkboxes Done ===========================")
@@ -143,10 +151,12 @@ def scrapeInput(response):
         value = anchor.get('name')
         if value:
             print(value)
+            print(value + " : Hidden Input")
         else:
             print('Hidden input has no name')
     print("================== Hidden Inputs Done ===========================")
 
+    print("============= Inputs Done =====================")
 
 def parseInput(query):
     print("")
@@ -171,6 +181,7 @@ def scrapeCookies(response):
     print("================== Cookies Discovered =====================")
     for cookie in requests.utils.dict_from_cookiejar(cookies):
         print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
+    print("================== Cookies Done ===========================")
 
 
 # TBD - Round 2
