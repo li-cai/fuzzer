@@ -1,4 +1,4 @@
-fuzzer
+Fuzzer
 ======
 
 A testing tool for discovering vulnerabilities in web-based systems.

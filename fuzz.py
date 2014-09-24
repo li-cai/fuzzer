@@ -47,7 +47,6 @@ def authenticate(url, netloc, appname):
 
         with requests.Session() as s:
             s.post(netloc + '/register.jsp', data=payload)
-            print(url);
             r = s.get(url, allow_redirects=False)
             return r
 
@@ -80,19 +79,25 @@ def guessLinks(url, words):
 
     count = 0
 
+    newURL = url
+    if not url.endswith('/'):
+        newURL = url + '/'
+
     for word in words:
-        newURL = url + '/' + word
-        response = requests.get(newURL)
+        currURL = newURL + word
+
+        response = requests.get(currURL)
         if (response.status_code == 200):
             count += 1
-            print(newURL)
+            print(currURL)
 
         for ext in extensions:
-            newURL = url + '/' + word + ext
-            response = requests.get(newURL)
+            currURL = newURL + word + ext
+
+            response = requests.get(currURL)
             if (response.status_code == 200):
                 count += 1
-                print(newURL)
+                print(currURL)
 
     print("==================== " + str(count) + " Links Guessed ====================")
 

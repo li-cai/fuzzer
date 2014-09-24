@@ -11,3 +11,7 @@ results
 admin
 logout
 register
+search
+q
+contact
+products
