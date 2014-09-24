@@ -32,11 +32,11 @@ To run the fuzzer from the command line, enter the following command:
 `python fuzz.py [discover | test] url OPTIONS`    
 
 ###Commands
-* discover - Output a list of all discovered input to the system.
+* `discover` - Output a list of all discovered input to the system.
 
 ###Options
-* --common-words=file - Newline delimited file of common words to be used in
+* `--common-words=file` - Newline delimited file of common words to be used in
 page and input guessing. (Required)
-* --custom-auth=string - Signals that the fuzzer should use hard-coded
+* `--custom-auth=string` - Signals that the fuzzer should use hard-coded
 authentication for a specific application. *dvwa* and *bodgeit* are
 currently supported. (Optional)
