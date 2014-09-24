@@ -16,30 +16,35 @@ def discover(url, words, query, response):
     scrapeCookies(response)
 
 
-def authenticate(url, appname):
+def authenticate(url, netloc, appname):
     if appname == 'dvwa':
         payload = {
             'username': 'admin',
             'password': 'password',
             'Login':'Login'
-            }
+        }
 
         with requests.Session() as s:
-            s.post(url+'/login.php', data = payload)
-            r = s.get(url+'/index.php', allow_redirects=False)
-
+            s.post(netloc +'/login.php', data = payload)
+            r = s.get(url, allow_redirects=False)
             return r
 
     elif appname == 'bodgeit':
-        pass
+        payload = {
+            'username': 'dankrutz@rit.edu',
+            'password1': 'password',
+            'password2': 'password',
+            'submit': 'submit'
+        }
+
+        with requests.Session() as s:
+            s.post(netloc + '/register.jsp', data=payload)
+            print(url);
+            r = s.get(url, allow_redirects=False)
+            return r
 
     else:
         print("Please specify 'dvwa' or 'bodgeit' for --custom-auth")
-
-
-    #r = requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password'), allow_redirects=True);
-    #print(r);
-    #print(r.url);
 
 
 def scrapeLinks(response):
@@ -133,6 +138,8 @@ def main():
 
     parsed = urlparse(args[2])
     url = parsed.scheme + '://' + parsed.netloc + parsed.path
+    netloc = parsed.scheme + '://' + parsed.netloc
+
     response = requests.get(url)
 
     for i in range(3, len(args)):
@@ -154,6 +161,6 @@ def main():
 
         elif (args[i].find("--custom-auth") > -1):
             appname = args[i].split("=", 1)[1]
-            response = authenticate(url, appname)
+            response = authenticate(url, netloc, appname)
 
 main()
