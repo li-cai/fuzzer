@@ -6,10 +6,8 @@ from urllib.parse import urlparse
 extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
-def discover(url, words, query):
+def discover(url, words, query, response):
     print("======================= fuzz round 1 - discover! =======================")
-
-    response = requests.get(url)
 
     scrapeLinks(response)
     guessLinks(url, words)
@@ -19,7 +17,22 @@ def discover(url, words, query):
 
 
 def authenticate(url):
-    print(requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password')));
+    payload = {
+        'username': 'admin',
+        'password': 'password',
+        'Login':'Login'
+        }
+
+    with requests.Session() as s:
+        s.post(url+'/login.php', data = payload)
+        r = s.get(url+'/index.php', allow_redirects=False)
+
+        return r
+
+
+    #r = requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password'), allow_redirects=True);
+    #print(r);
+    #print(r.url);
 
 
 def scrapeLinks(response):
@@ -113,6 +126,7 @@ def main():
 
     parsed = urlparse(args[2])
     url = parsed.scheme + '://' + parsed.netloc + parsed.path
+    response = requests.get(url)
 
     for i in range(3, len(args)):
         if (args[i].find("--common-words") > -1):
@@ -124,7 +138,7 @@ def main():
                 words = textfile.read().split('\n')
 
                 if args[1] == "discover":
-                    discover(url, words, parsed.query)
+                    discover(url, words, parsed.query, response)
                 elif args[1] == "test":
                     test(args)
 
@@ -132,6 +146,6 @@ def main():
                 print(filepath + " was not found.")
 
         elif (args[i].find("--custom-auth") > -1):
-            authenticate(url)
+            response = authenticate(url)
 
 main()
