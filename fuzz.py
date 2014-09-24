@@ -7,6 +7,9 @@ extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
 def discover(url, words, query, response):
+    """
+    Starts the discover process of fuzzing.
+    """
     print("")
     print("================ FUZZ ROUND 1 - DISCOVER! ================")
 
@@ -18,6 +21,9 @@ def discover(url, words, query, response):
 
 
 def authenticate(url, netloc, appname):
+    """
+    Hard-coded authentication for DVWA or BodgeIt. 
+    """
     if appname == 'dvwa':
         payload = {
             'username': 'admin',
@@ -45,11 +51,11 @@ def authenticate(url, netloc, appname):
             r = s.get(url, allow_redirects=False)
             return r
 
-    else:
-        print("Please specify 'dvwa' or 'bodgeit' for --custom-auth")
-
 
 def scrapeLinks(response):
+    """
+    Parses the HTML to find all links.
+    """
     soup = bs4.BeautifulSoup(response.text)
     anchors = soup.find_all('a')
 
@@ -66,6 +72,9 @@ def scrapeLinks(response):
 
 
 def guessLinks(url, words):
+    """
+    Attempts to guess valid links using the given list of common words.
+    """
     print("")
     print("=================== Guessing Links... ===================")
 
@@ -89,6 +98,9 @@ def guessLinks(url, words):
 
 
 def scrapeInput(response):
+    """
+    Parses the HTML to find all input values and types.
+    """
     soup = bs4.BeautifulSoup(response.text)
 
     print();
@@ -151,6 +163,9 @@ def scrapeInput(response):
     print("================== " + str(count) + " Inputs Discovered ==================")
 
 def parseInput(query):
+    """
+    Parses input from the given URL.
+    """
     print("")
     print("=============== Parsing Input from URL... ===============")
 
@@ -166,6 +181,9 @@ def parseInput(query):
     print("==================== " + str(count) + " Inputs Parsed ====================")
 
 def scrapeCookies(response):
+    """
+    Discovers cookies for the given url"
+    """
     # Get cookies
     cookies = response.cookies
 
@@ -211,9 +229,13 @@ def main():
         return
 
     if "--custom-auth=bodgeit" in args:
-        response = authenticate(url, netloc, "bodgeit")
+        temp = authenticate(url, netloc, "bodgeit")
+        if temp.status_code == 200:
+            response = temp
     elif "--custom-auth=dvwa" in args:
-        response = authenticate(url, netloc, "dvwa")
+        temp = authenticate(url, netloc, "dvwa")
+        if temp.status_code == 200:
+            response = temp
 
     for i in range(3, len(args)):
         if (args[i].find("--common-words") > -1):
