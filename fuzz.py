@@ -16,18 +16,25 @@ def discover(url, words, query, response):
     scrapeCookies(response)
 
 
-def authenticate(url):
-    payload = {
-        'username': 'admin',
-        'password': 'password',
-        'Login':'Login'
-        }
+def authenticate(url, appname):
+    if appname == 'dvwa':
+        payload = {
+            'username': 'admin',
+            'password': 'password',
+            'Login':'Login'
+            }
 
-    with requests.Session() as s:
-        s.post(url+'/login.php', data = payload)
-        r = s.get(url+'/index.php', allow_redirects=False)
+        with requests.Session() as s:
+            s.post(url+'/login.php', data = payload)
+            r = s.get(url+'/index.php', allow_redirects=False)
 
-        return r
+            return r
+
+    elif appname == 'bodgeit':
+        pass
+
+    else:
+        print("Please specify 'dvwa' or 'bodgeit' for --custom-auth")
 
 
     #r = requests.get(url, auth=requests.auth.HTTPBasicAuth('admin', 'password'), allow_redirects=True);
@@ -43,7 +50,7 @@ def scrapeLinks(response):
     print("=================== Links Discovered ===================")
 
     for anchor in anchors:
-        if anchor.has_attr('href') and anchor['href']:
+        if anchor.has_attr('href') and anchor['href'] != '':
             print(anchor['href'])
 
 
@@ -146,6 +153,7 @@ def main():
                 print(filepath + " was not found.")
 
         elif (args[i].find("--custom-auth") > -1):
-            response = authenticate(url)
+            appname = args[i].split("=", 1)[1]
+            response = authenticate(url, appname)
 
 main()
