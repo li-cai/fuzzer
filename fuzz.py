@@ -98,8 +98,10 @@ def scrapeInput(response):
 
     anchors = soup.find_all('input', {'type':'text'})
     for anchor in anchors:
+        value = anchor.get('name')
         count += 1
-        print(anchor['name'] + " : Textbox")
+        if value:
+            print(value + " : Textbox")
 
     anchors = soup.find_all('input', {'type':'submit'})
     for anchor in anchors:
