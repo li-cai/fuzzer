@@ -204,7 +204,11 @@ def main():
     url = parsed.scheme + '://' + parsed.netloc + parsed.path
     netloc = parsed.scheme + '://' + parsed.netloc
 
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except:
+        print("Please enter a valid URL starting with 'http://'")
+        return
 
     if "--custom-auth=bodgeit" in args:
         response = authenticate(url, netloc, "bodgeit")
