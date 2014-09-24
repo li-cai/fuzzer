@@ -27,7 +27,6 @@ def authenticate(url, appname):
         with requests.Session() as s:
             s.post(url+'/login.php', data = payload)
             r = s.get(url+'/index.php', allow_redirects=False)
-
             return r
 
     elif appname == 'bodgeit':
@@ -216,4 +215,3 @@ def main():
             appname = args[i].split("=", 1)[1]
             response = authenticate(url, appname)
 
-main()
