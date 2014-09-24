@@ -30,7 +30,7 @@ def scrapeLinks(response):
     print("=================== Links Discovered ===================")
 
     for anchor in anchors:
-        if anchor.has_attr('href'):
+        if anchor.has_attr('href') and anchor['href']:
             print(anchor['href'])
 
 
@@ -48,7 +48,7 @@ def guessLinks(url, words):
             count += 1
 
         for ext in extensions:
-            newURL = url + '/' + word + ext;
+            newURL = url + '/' + word + ext
             response = requests.get(newURL)
             if (response.status_code == 200):
                 print(newURL)
@@ -77,11 +77,8 @@ def parseInput(query):
 
     for elem in query:
         qvalues = elem.split('=')
-        print(qvalues[0])
-
-    # payload = {'key1' : 'value1', 'key2': 'value2'}
-    # r = requests.post(url, data=payload)
-    # print(r.status_code)
+        if len(qvalues) > 1:
+            print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
 
 
 def scrapeCookies(response):
@@ -95,7 +92,6 @@ def scrapeCookies(response):
     print("================== Cookies Discovered =====================")
     for cookie in requests.utils.dict_from_cookiejar(cookies):
         print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
-    print("================== Cookies Done ===========================")
 
 
 # TBD - Round 2
@@ -138,4 +134,4 @@ def main():
         elif (args[i].find("--custom-auth") > -1):
             authenticate(url)
 
-main();
+main()

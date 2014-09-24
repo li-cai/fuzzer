@@ -8,3 +8,6 @@ styles
 login
 confirm
 results
+admin
+logout
+register
