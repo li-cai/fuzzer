@@ -52,11 +52,15 @@ def scrapeLinks(response):
     anchors = soup.find_all('a')
 
     print("")
-    print("=================== Links Discovered ===================")
+    print("================== Discovering Links... ==================")
 
+    count = 0;
     for anchor in anchors:
         if anchor.has_attr('href') and anchor['href'] != '':
             print(anchor['href'])
+            count += 1;
+
+    print("================== " + str(count) + " Links Discovered ==================")
 
 
 def guessLinks(url, words):
@@ -79,7 +83,7 @@ def guessLinks(url, words):
                 print(newURL)
                 count += 1
 
-    print("========== Link Guessing Complete: " + str(count) + " Links Guessed ==========")
+    print("==================== " + str(count) + " Links Guessed ====================")
 
 
 def scrapeInput(response):
@@ -87,11 +91,11 @@ def scrapeInput(response):
     anchors = soup.find_all('input', {'type':'text'})
 
     print("")
-    print("=================== Textboxs Discovered ===================")
+    print("=================== Textboxes Discovered ===================")
 
     for anchor in anchors:
         print(anchor['name'])
-    print("================== Textboxs Done ===========================")
+    print("================== Textboxes Done ===========================")
 
     print("")
     print("=================== Buttons Discovered ===================")
@@ -174,9 +178,14 @@ def scrapeCookies(response):
     session = requests.session()
 
     print("")
-    print("================== Cookies Discovered =====================")
+    print("================== Discovering Cookies... =====================")
+
+    count = 0
     for cookie in requests.utils.dict_from_cookiejar(cookies):
+        count += 1
         print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
+
+    print("================= " + str(count) + " Cookies Discovered ==================")
 
 
 # TBD - Round 2
