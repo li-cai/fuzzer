@@ -7,13 +7,14 @@ extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
 def discover(url, words, query, response):
-    print("======================= fuzz round 1 - discover! =======================")
+    print("")
+    print("================ FUZZ ROUND 1 - DISCOVER! ================")
 
     scrapeLinks(response)
     guessLinks(url, words)
     scrapeInput(response)
-    scrapeCookies(response)
     parseInput(query)
+    scrapeCookies(response)
 
 
 def authenticate(url, netloc, appname):
@@ -27,6 +28,7 @@ def authenticate(url, netloc, appname):
         with requests.Session() as s:
             s.post(netloc +'/login.php', data = payload)
             r = s.get(url, allow_redirects=False)
+
             return r
 
     elif appname == 'bodgeit':
@@ -73,102 +75,93 @@ def guessLinks(url, words):
         newURL = url + '/' + word
         response = requests.get(newURL)
         if (response.status_code == 200):
-            print(newURL)
             count += 1
+            print(newURL)
 
         for ext in extensions:
             newURL = url + '/' + word + ext
             response = requests.get(newURL)
             if (response.status_code == 200):
-                print(newURL)
                 count += 1
+                print(newURL)
 
     print("==================== " + str(count) + " Links Guessed ====================")
 
 
 def scrapeInput(response):
     soup = bs4.BeautifulSoup(response.text)
+
+    print();
+    print("================= Discovering Input... ==================") 
+    
+    count = 0
+
     anchors = soup.find_all('input', {'type':'text'})
-
-    print("")
-    print("=================== Textboxes Discovered ===================")
-
     for anchor in anchors:
-        print(anchor['name'])
-    print("================== Textboxes Done ===========================")
-
-    print("")
-    print("=================== Buttons Discovered ===================")
+        count += 1
+        print(anchor['name'] + " : Textbox")
 
     anchors = soup.find_all('input', {'type':'submit'})
     for anchor in anchors:
         value = anchor.get('name')
+        count += 1
         if value:
-            print(value)
+            print(value + " : Button")
         else:
             print('Button input has no name')
-    print("================== Buttons Done ===========================")
-
-    print("")
-    print("=================== Radio Buttons Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'radio'})
     for anchor in anchors:
         value = anchor.get('name')
+        count += 1
         if value:
-            print(value)
+            print(value + " : Radio Button")
         else:
             print('Radio Button input has no name')
-    print("================== Radio Buttons Done ===========================")
-
-    print("")
-    print("=================== Passwords Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'password'})
     for anchor in anchors:
         value = anchor.get('name')
+        count += 1
         if value:
-            print(value)
+            print(value + " : Password")
         else:
             print('Password input has no name')
-    print("================== Passwords Done ===========================")
-
-    print("")
-    print("=================== Checkboxes Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'checkbox'})
     for anchor in anchors:
+        count += 1
         value = anchor.get('name')
         if value:
-            print(value)
+            print(value + " : Checkbox")
         else:
             print('Checkbox input has no name')
-    print("================== Checkboxes Done ===========================")
-
-    print("")
-    print("=================== Hidden Inputs Discovered ===================")
 
     anchors = soup.find_all('input', {'type':'hidden'})
     for anchor in anchors:
+        count += 1
         value = anchor.get('name')
         if value:
-            print(value)
+            print(value + " : Hidden Input")
         else:
             print('Hidden input has no name')
-    print("================== Hidden Inputs Done ===========================")
 
+    print("================== " + str(count) + " Inputs Discovered ==================")
 
 def parseInput(query):
     print("")
-    print("============== Parsing Input from URL... ==============")
+    print("=============== Parsing Input from URL... ===============")
 
     query = query.split('&')
 
+    count = 0
     for elem in query:
         qvalues = elem.split('=')
         if len(qvalues) > 1:
+            count += 1
             print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
 
+    print("==================== " + str(count) + " Inputs Parsed ====================")
 
 def scrapeCookies(response):
     # Get cookies
@@ -178,7 +171,7 @@ def scrapeCookies(response):
     session = requests.session()
 
     print("")
-    print("================== Discovering Cookies... =====================")
+    print("=============== Discovering Cookies... ==================")
 
     count = 0
     for cookie in requests.utils.dict_from_cookiejar(cookies):
@@ -211,6 +204,11 @@ def main():
 
     response = requests.get(url)
 
+    if "--custom-auth=bodgeit" in args:
+        response = authenticate(url, netloc, "bodgeit")
+    elif "--custom-auth=dvwa" in args:
+        response = authenticate(url, netloc, "dvwa")
+
     for i in range(3, len(args)):
         if (args[i].find("--common-words") > -1):
             filepath = args[i].split("=", 1)[1]
@@ -227,9 +225,5 @@ def main():
 
             except FileNotFoundError:
                 print(filepath + " was not found.")
-
-        elif (args[i].find("--custom-auth") > -1):
-            appname = args[i].split("=", 1)[1]
-            response = authenticate(url, netloc, appname)
 
 main()
