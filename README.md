@@ -36,7 +36,7 @@ To run the fuzzer from the command line, enter the following command:
 
 ###Options
 * --common-words=file - Newline delimited file of common words to be used in
-page and input guessting. (Required)
+page and input guessing. (Required)
 * --custom-auth=string - Signals that the fuzzer should use hard-coded
 authentication for a specific application. *dvwa* and *bodgeit* are
 currently supported. (Optional)
