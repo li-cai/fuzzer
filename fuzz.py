@@ -205,9 +205,27 @@ def scrapeCookies(response):
 
     print("================= " + str(count) + " Cookies Discovered ==================")
 
+def slowResponse(response, slow):
+    """
+    Discovers if the response message is being recieved to slow signaling a possible DOS attack
+    Returns true if the response was slower than our slow limit, and false if the response was fast enough
+    """
+    respTime = response.elapsed.total_seconds()
+    if (slow/1000 < respTime):
+        return true
+    return false
+
+def badHTTPCode(response):
+    """
+    Checks the response status code to ensure everything is okay
+    Returns true if there is a problem and false if the response was okay
+    """
+    if(response.status_code != requests.codes.ok):
+        return true
+    return false
 
 # TBD - Round 2
-def test(args):
+def test(url, words, parsed.query, response, slow):
     print("============ fuzz round 2 - test! ============")
 
 
@@ -242,6 +260,13 @@ def main():
         if temp.status_code == 200:
             response = temp
 
+    for x in range(3, len(args)):
+        if (args[x].find("--slow") > -1):
+            slow = args[x].split("=". 1)[1]
+        else:
+            slow = 500
+        #TODO read in vectors and pass the list into the test function...also the sensitive data file
+
     for i in range(3, len(args)):
         if (args[i].find("--common-words") > -1):
             filepath = args[i].split("=", 1)[1]
@@ -254,7 +279,7 @@ def main():
                 if args[1] == "discover":
                     discover(url, words, parsed.query, response)
                 elif args[1] == "test":
-                    test(args)
+                    test(url, words, parsed.query, response, slow)
 
             except FileNotFoundError:
                 print(filepath + " was not found.")
