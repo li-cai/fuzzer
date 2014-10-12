@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
+
+
 def discover(url, words, query, response):
     """
     Starts the discover process of fuzzing.
@@ -207,8 +209,16 @@ def scrapeCookies(response):
 
 
 # TBD - Round 2
-def test(url, response, slow):
+def test(url, response, vectors, sensitive, slow, random):
     print("================ FUZZ ROUND 2 - TEST! ================")
+    # for vector in vectors:
+    #     print(vector)
+
+def checkSanitizedInput(vectors):
+    pass
+
+def checkSensitiveData(sensitive):
+    pass
 
 
 def slowResponse(response, slow):
@@ -285,6 +295,7 @@ def main():
             response = temp
 
     slow = 500
+    random = False
     words = []
     vectors = []
     sensitive = []
@@ -302,6 +313,13 @@ def main():
         if args[i].find("--sensitive") > -1:
             sensitive = loadFile(args[i])
 
+        if args[i].find("--random") > -1:
+            randomstr = args[i].split("=", 1)[1]
+            if randomstr == "true":
+                random = True
+            elif randomstr == "false":
+                random = False
+
     if args[1] == "discover":
         if len(args) < 4 or words == None:
             printDiscoverErrorMessage()
@@ -311,7 +329,7 @@ def main():
         if len(args) < 5 or vectors == None or sensitive == None:
             printTestErrorMessage()
             return
-        test(url, response, slow)
+        test(url, response, vectors, sensitive, slow, random)
     else:
         printErrorMessage()
 
