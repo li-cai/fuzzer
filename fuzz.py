@@ -205,34 +205,58 @@ def scrapeCookies(response):
 
     print("================= " + str(count) + " Cookies Discovered ==================")
 
+
+# TBD - Round 2
+def test(url, response, slow):
+    print("================ FUZZ ROUND 2 - TEST! ================")
+
+
 def slowResponse(response, slow):
     """
-    Discovers if the response message is being recieved to slow signaling a possible DOS attack
-    Returns true if the response was slower than our slow limit, and false if the response was fast enough
+    Discovers if the response message is being recieved to slow signaling
+    a possible DOS attack.
+    Returns true if the response was slower than our slow limit, and false
+    if the response was fast enough.
     """
     respTime = response.elapsed.total_seconds()
     if (slow/1000 < respTime):
         return true
     return false
 
+
 def badHTTPCode(response):
     """
     Checks the response status code to ensure everything is okay
     Returns true if there is a problem and false if the response was okay
     """
-    if(response.status_code != requests.codes.ok):
+    if (response.status_code != requests.codes.ok):
         return true
     return false
-
-# TBD - Round 2
-def test(url, words, parsed.query, response, slow):
-    print("============ fuzz round 2 - test! ============")
 
 
 def printErrorMessage():
     print("Please enter a command in the following format:")
     print("python fuzz.py [discover | test] url OPTIONS")   
 
+def printDiscoverErrorMessage():
+    print("Please enter a command to discover in the following format:")
+    print("python fuzz.py discover url --common-words=file OPTIONS") 
+
+def printTestErrorMessage():
+    print("Please enter a command to discover in the following format:")
+    print("python fuzz.py test url --vectors=file --sensitive=file OPTIONS") 
+
+
+def loadFile(arg):
+    filepath = arg.split("=", 1)[1]
+
+    try:
+        textfile = open(filepath, 'r')
+        valueslist = textfile.read().split('\n')
+        return valueslist
+    except FileNotFoundError:
+        print(filepath + " was not found.")
+        return None
 
 def main():
     args = sys.argv
@@ -260,28 +284,35 @@ def main():
         if temp.status_code == 200:
             response = temp
 
-    for x in range(3, len(args)):
-        if (args[x].find("--slow") > -1):
-            slow = args[x].split("=". 1)[1]
-        else:
-            slow = 500
-        #TODO read in vectors and pass the list into the test function...also the sensitive data file
+    slow = 500
+    words = []
+    vectors = []
+    sensitive = []
 
     for i in range(3, len(args)):
-        if (args[i].find("--common-words") > -1):
-            filepath = args[i].split("=", 1)[1]
+        if args[i].find("--common-words") > -1:
+            words = loadFile(args[i])
 
-            try:
-                textfile = open(filepath, 'r')
+        if args[i].find("--common-words") > -1:
+            slow = args[i].split("=", 1)[1]
 
-                words = textfile.read().split('\n')
+        if args[i].find("--vectors") > -1:
+             vectors = loadFile(args[i])
 
-                if args[1] == "discover":
-                    discover(url, words, parsed.query, response)
-                elif args[1] == "test":
-                    test(url, words, parsed.query, response, slow)
+        if args[i].find("--sensitive") > -1:
+            sensitive = loadFile(args[i])
 
-            except FileNotFoundError:
-                print(filepath + " was not found.")
+    if args[1] == "discover":
+        if len(args) < 4 or words == None:
+            printDiscoverErrorMessage()
+            return
+        discover(url, words, parsed.query, response)
+    elif args[1] == "test":
+        if len(args) < 5 or vectors == None or sensitive == None:
+            printTestErrorMessage()
+            return
+        test(url, response, slow)
+    else:
+        printErrorMessage()
 
 main()
