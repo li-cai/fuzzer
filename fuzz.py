@@ -6,16 +6,16 @@ from urllib.parse import urlparse
 extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', \
               '.xhtml', '.dll']
 
+pages = []
 
-
-def discover(url, words, query, response):
+def discover(url, netloc, words, query, response):
     """
     Starts the discover process of fuzzing.
     """
     print("")
     print("================ FUZZ ROUND 1 - DISCOVER! ================")
 
-    scrapeLinks(response)
+    scrapeLinks(response, netloc)
     guessLinks(url, words)
     scrapeInput(response)
     parseInput(query)
@@ -53,7 +53,7 @@ def authenticate(url, netloc, appname):
             return r
 
 
-def scrapeLinks(response):
+def scrapeLinks(response, netloc):
     """
     Parses the HTML to find all links.
     """
@@ -63,13 +63,19 @@ def scrapeLinks(response):
     print("")
     print("================== Discovering Links... ==================")
 
-    count = 0;
     for anchor in anchors:
         if anchor.has_attr('href') and anchor['href'] != '':
-            print(anchor['href'])
-            count += 1;
+            link = anchor['href']
 
-    print("================== " + str(count) + " Links Discovered ==================")
+            if link.startswith('//'):
+                link = 'http:' + link
+            elif link.find('http://') < 0 and link.find('https://') < 0:
+                link = netloc + link
+
+            print(link)
+            pages.append(link)
+
+    print("================== " + str(len(pages)) + " Links Discovered ==================")
 
 
 def guessLinks(url, words):
@@ -324,7 +330,7 @@ def main():
         if len(args) < 4 or words == None:
             printDiscoverErrorMessage()
             return
-        discover(url, words, parsed.query, response)
+        discover(url, netloc, words, parsed.query, response)
     elif args[1] == "test":
         if len(args) < 5 or vectors == None or sensitive == None:
             printTestErrorMessage()
