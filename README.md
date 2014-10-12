@@ -31,12 +31,25 @@ Usage
 To run the fuzzer from the command line, enter the following command:  
 `python fuzz.py [discover | test] url OPTIONS`    
 
-###Commands
+### Commands
 * `discover` - Output a list of all discovered input to the system.
+* `test` - Discover all inputs, then attempt a list of exploit vectors
+on those inputs to report potential vulnerabilities.
 
-###Options
+### Discover Options
 * `--common-words=file` - Newline delimited file of common words to be used in
 page and input guessing. (Required)
 * `--custom-auth=string` - Signals that the fuzzer should use hard-coded
 authentication for a specific application. *dvwa* and *bodgeit* are
 currently supported. (Optional)
+
+### Test Options
+* `--vectors=file` - Newline delimited file of common exploits to
+vulnerabilities. (Required)
+* `--sensitive=file` - Newline delimited file of data that should
+never be leaked. (Required)
+* `--slow=500` - Number of milliseconds for a response to be
+considered "slow". Default is 500 milliseconds. (Optional)
+* `--random=[true|false]` - When false, input to each page is tried
+systematically. When true, a random page and random input field
+are chosen to test all vectors. Default is false. (Optional)
