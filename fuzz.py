@@ -209,27 +209,33 @@ def scrapeCookies(response):
 def test(url, words, vectors, sensitive, slow, isRandom):
     print("\n\n================= FUZZ ROUND 2 - TEST! ==================")
 
-    # print("\n============ Checking Input Sanitization... =============")
     count = 0
     if not isRandom:
         for urlkey in pages:
-            print("\n\n----------------------------------------------------------------------")
-            print(urlkey)
-            print("----------------------------------------------------------------------")
+
             parsed = urlparse(urlkey)
             response = requests.get(urlkey)
 
             scrapeInput(response, urlkey, False)
             parseInput(parsed.query, urlkey, False)
 
-            count += sendVectors(urlkey, vectors)
+            vulnerabilities = sendVectors(urlkey, vectors, slow)
+            if len(vulnerabilities) > 0:
+                count += len(vulnerabilities)
+
+                print("\n\n----------------------------------------------------------------------")
+                print(urlkey)
+                print("----------------------------------------------------------------------")
+                for vulnerability in vulnerabilities:
+                    print(vulnerability)
     else:
         randompage = random.choice(list(pageforminput.keys()))
-        count += sendVectors(randompage, vectors)
+        count += sendVectors(randompage, vectors, slow)
 
-    # print("============ " + str(count) + " Unsanitized Inputs Discovered ============")
+    print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
-def sendVectors(url, vectors):
+
+def sendVectors(url, vectors, slow):
     inputs = []
     params = []
 
@@ -238,7 +244,7 @@ def sendVectors(url, vectors):
     if url in pageurlparam:
         params = pageurlparam[url]
 
-    unsanitized = []
+    vulnerabilities = []
 
     payload = {}
     for ipt in inputs:
@@ -257,7 +263,12 @@ def sendVectors(url, vectors):
         with requests.Session() as s:
             postresponse = s.post(url, data=payload)
             if vector in postresponse.text:
-                print(vector + " : unsanitized with input = " + str(payload))
+                vulnerabilities.append(vector + " : unsanitized with input = " + str(payload))
+            #check sensitive data
+            if slowResponse(postresponse, slow):
+                vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + " milliseconds with input " + vector)
+            if badHTTPCode(postresponse):
+                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + " with input " + vector)
 
         for key in getpayload:
             getpayload[key] = vector
@@ -265,9 +276,9 @@ def sendVectors(url, vectors):
         if len(getpayload) > 0:
             getresponse = requests.get(url, params=getpayload)
             if vector in getresponse.text:
-                print(vector + " : unsanitized with input = " + str(getpayload))
+                vulnerabilities.append(vector + " : unsanitized")
 
-    return len(unsanitized)
+    return vulnerabilities
 
 
 def checkSensitiveData(sensitive):
@@ -283,8 +294,8 @@ def slowResponse(response, slow):
     """
     respTime = response.elapsed.total_seconds()
     if (slow/1000 < respTime):
-        return true
-    return false
+        return True
+    return False
 
 
 def badHTTPCode(response):
@@ -293,8 +304,8 @@ def badHTTPCode(response):
     Returns true if there is a problem and false if the response was okay
     """
     if (response.status_code != requests.codes.ok):
-        return true
-    return false
+        return True
+    return False
 
 
 def printErrorMessage():
@@ -357,11 +368,11 @@ def main():
         if args[i].find("--common-words") > -1:
             words = loadFile(args[i])
 
-        if args[i].find("--common-words") > -1:
-            slow = args[i].split("=", 1)[1]
+        if args[i].find("--slow") > -1:
+            slow = int(args[i].split("=", 1)[1])
 
         if args[i].find("--vectors") > -1:
-             vectors = loadFile(args[i])
+            vectors = loadFile(args[i])
 
         if args[i].find("--sensitive") > -1:
             sensitive = loadFile(args[i])
