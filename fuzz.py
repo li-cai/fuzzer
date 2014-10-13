@@ -22,11 +22,26 @@ def discover(url, netloc, words, query, response):
     pageurlparam[url] = []
     pageforminput[url] = []
 
-    scrapeLinks(response, url)
-    guessLinks(url, words)
-    scrapeInput(response, url)
-    parseInput(query, url)
-    scrapeCookies(response)
+    print("\n================== Discovering Links... ==================")
+    count = scrapeLinks(response, url)
+    print("================== " + str(count) + " Links Discovered ==================")
+
+    print("\n=================== Guessing Links... ===================")
+    count = guessLinks(url, words)
+    print("==================== " + str(count) + " Links Guessed ====================")
+
+    print("\n================= Discovering Input... ==================") 
+    count = scrapeInput(response, url)
+    print("================== " + str(count) + " Inputs Discovered ==================")
+
+    print("\n=============== Parsing Input from URL... ===============")
+    count = parseInput(query, url)
+    print("==================== " + str(count) + " Inputs Parsed ====================")
+
+    print("\n=============== Discovering Cookies... ==================")
+    count = scrapeCookies(response)
+    print("================= " + str(count) + " Cookies Discovered ==================")
+
 
 def authenticate(url, netloc, appname):
     """
@@ -65,9 +80,6 @@ def scrapeLinks(response, url):
     soup = bs4.BeautifulSoup(response.text)
     anchors = soup.find_all('a')
 
-    print("")
-    print("================== Discovering Links... ==================")
-
     newURL = url
     if not url.endswith('/'):
         newURL = url + '/'
@@ -86,17 +98,12 @@ def scrapeLinks(response, url):
 
             print(link)
             count += 1
-
-    print("================== " + str(count) + " Links Discovered ==================")
-
+    return count
 
 def guessLinks(url, words):
     """
     Attempts to guess valid links using the given list of common words.
     """
-    print("")
-    print("=================== Guessing Links... ===================")
-
     count = 0
 
     newURL = url
@@ -120,11 +127,10 @@ def guessLinks(url, words):
             response = requests.get(currURL)
             if (response.status_code == 200):
                 count += 1
-                # pages.append(currURL)
                 addLinkToDict(currURL, pageurlparam, pageforminput)
                 print(currURL)
 
-    print("==================== " + str(count) + " Links Guessed ====================")
+    return count
 
 
 def addLinkToDict(link, dict1, dict2):
@@ -139,8 +145,6 @@ def scrapeInput(response, url):
     Parses the HTML to find all input values and types.
     """
     soup = bs4.BeautifulSoup(response.text)
-
-    print("\n================= Discovering Input... ==================") 
     
     count = 0
 
@@ -155,20 +159,16 @@ def scrapeInput(response, url):
         else:
             print("input has no name : " + input_type)
 
-        # forminputs.append(value)
         if url in pageforminput:
             pageforminput[url].append(value)
 
         count += 1
-
-    print("================== " + str(count) + " Inputs Discovered ==================")
+    return count
 
 def parseInput(query, url):
     """
     Parses input from the given URL.
     """
-    print("\n=============== Parsing Input from URL... ===============")
-
     query = query.split('&')
 
     count = 0
@@ -181,8 +181,8 @@ def parseInput(query, url):
                 pageurlparam[url].append(qvalues[0])
 
             print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
+    return count
 
-    print("==================== " + str(count) + " Inputs Parsed ====================")
 
 def scrapeCookies(response):
     """
@@ -194,28 +194,25 @@ def scrapeCookies(response):
     # Make a session
     session = requests.session()
 
-    print("\n=============== Discovering Cookies... ==================")
-
     count = 0
     for cookie in requests.utils.dict_from_cookiejar(cookies):
         count += 1
         print(cookie + " : " + requests.utils.dict_from_cookiejar(cookies)[cookie])
-
-    print("================= " + str(count) + " Cookies Discovered ==================")
+    return count
 
 
 def test(url, response, vectors, sensitive, slow, random):
-    # print("")
-    print("\n================= FUZZ ROUND 2 - TEST! ==================")
+    print("\n\n================= FUZZ ROUND 2 - TEST! ==================")
 
-    checkSanitizedInput(url, vectors)
-    # print(pageurlparam[url])
+    print("\n============ Checking Input Sanitization... =============")
+    count = checkSanitizedInput(url, vectors)
+    print("============ " + str(count) + " Unsanitized Inputs Discovered ============")
 
 
 def checkSanitizedInput(url, vectors):
-    print("\n============ Checking Input Sanitization... =============")
-
     inputs = pageforminput[url]
+    params = pageurlparam[url]
+
     unsanitized = []
 
     payload = {}
@@ -223,19 +220,33 @@ def checkSanitizedInput(url, vectors):
         if ipt not in payload:
             payload[ipt] = ''
 
+    getpayload = {}
+    for param in params:
+        if param not in getpayload:
+            getpayload[param] = ''
+
     for vector in vectors:
         for key in payload:
             payload[key] = vector
 
         with requests.Session() as s:
-            r = s.post(url, data=payload)
-            if vector in r.text and vector not in unsanitized:
+            postresponse = s.post(url, data=payload)
+            if vector in postresponse.text and vector not in unsanitized:
                 unsanitized.append(vector)
 
-    for exploit in unsanitized:
-        print(exploit + " - unsanitized on " + url)
+        for key in getpayload:
+            getpayload[key] = vector
 
-    print("============ " + str(len(unsanitized)) + " Unsanitized Inputs Discovered ============")
+        getresponse = requests.get(url, params=getpayload)
+        if vector in getresponse.text and vector not in unsanitized:
+            unsanitized.append(vector)
+
+    for exploit in unsanitized:
+        print(exploit + " : unsanitized on " + url)
+
+    return len(unsanitized)
+    
+
 
 def checkSensitiveData(sensitive):
     pass
