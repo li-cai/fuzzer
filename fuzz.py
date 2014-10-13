@@ -22,7 +22,7 @@ def discover(url, netloc, words, query, response):
     pageurlparam[url] = []
     pageforminput[url] = []
 
-    scrapeLinks(response, netloc)
+    scrapeLinks(response, url)
     guessLinks(url, words)
     scrapeInput(response, url)
     parseInput(query, url)
@@ -58,7 +58,7 @@ def authenticate(url, netloc, appname):
             return r
 
 
-def scrapeLinks(response, netloc):
+def scrapeLinks(response, url):
     """
     Parses the HTML to find all links.
     """
@@ -68,6 +68,10 @@ def scrapeLinks(response, netloc):
     print("")
     print("================== Discovering Links... ==================")
 
+    newURL = url
+    if not url.endswith('/'):
+        newURL = url + '/'
+
     count = 0
     for anchor in anchors:
         if anchor.has_attr('href') and anchor['href'] != '':
@@ -76,7 +80,7 @@ def scrapeLinks(response, netloc):
             if link.startswith('//'):
                 link = 'http:' + link
             elif link.find('http://') < 0 and link.find('https://') < 0:
-                link = netloc + link
+                link = newURL + link
                 # pages.append(link)
                 addLinkToDict(link, pageurlparam, pageforminput)
 
@@ -112,6 +116,7 @@ def guessLinks(url, words):
         for ext in extensions:
             currURL = newURL + word + ext
 
+
             response = requests.get(currURL)
             if (response.status_code == 200):
                 count += 1
@@ -135,8 +140,7 @@ def scrapeInput(response, url):
     """
     soup = bs4.BeautifulSoup(response.text)
 
-    print();
-    print("================= Discovering Input... ==================") 
+    print("\n================= Discovering Input... ==================") 
     
     count = 0
 
@@ -156,59 +160,6 @@ def scrapeInput(response, url):
             pageforminput[url].append(value)
 
         count += 1
-
-
-    # anchors = soup.find_all('input', {'type':'text'})
-    # for anchor in anchors:
-    #     value = anchor.get('name')
-    #     count += 1
-    #     if value:
-    #         print(value + " : Textbox")
-
-    # anchors = soup.find_all('input', {'type':'submit'})
-    # for anchor in anchors:
-    #     value = anchor.get('name')
-    #     count += 1
-    #     if value:
-    #         print(value + " : Button")
-    #     else:
-    #         print('Button input has no name')
-
-    # anchors = soup.find_all('input', {'type':'radio'})
-    # for anchor in anchors:
-    #     value = anchor.get('name')
-    #     count += 1
-    #     if value:
-    #         print(value + " : Radio Button")
-    #     else:
-    #         print('Radio Button input has no name')
-
-    # anchors = soup.find_all('input', {'type':'password'})
-    # for anchor in anchors:
-    #     value = anchor.get('name')
-    #     count += 1
-    #     if value:
-    #         print(value + " : Password")
-    #     else:
-    #         print('Password input has no name')
-
-    # anchors = soup.find_all('input', {'type':'checkbox'})
-    # for anchor in anchors:
-    #     count += 1
-    #     value = anchor.get('name')
-    #     if value:
-    #         print(value + " : Checkbox")
-    #     else:
-    #         print('Checkbox input has no name')
-
-    # anchors = soup.find_all('input', {'type':'hidden'})
-    # for anchor in anchors:
-    #     count += 1
-    #     value = anchor.get('name')
-    #     if value:
-    #         print(value + " : Hidden Input")
-    #     else:
-    #         print('Hidden input has no name')
 
     print("================== " + str(count) + " Inputs Discovered ==================")
 
@@ -253,16 +204,38 @@ def scrapeCookies(response):
     print("================= " + str(count) + " Cookies Discovered ==================")
 
 
-# TBD - Round 2
 def test(url, response, vectors, sensitive, slow, random):
     # print("")
-    print("\n================ FUZZ ROUND 2 - TEST! ================")
+    print("\n================= FUZZ ROUND 2 - TEST! ==================")
 
-    # print(pageforminput[url])
+    checkSanitizedInput(url, vectors)
     # print(pageurlparam[url])
 
-def checkSanitizedInput(vectors):
-    pass
+
+def checkSanitizedInput(url, vectors):
+    print("\n============ Checking Input Sanitization... =============")
+
+    inputs = pageforminput[url]
+    unsanitized = []
+
+    payload = {}
+    for ipt in inputs:
+        if ipt not in payload:
+            payload[ipt] = ''
+
+    for vector in vectors:
+        for key in payload:
+            payload[key] = vector
+
+        with requests.Session() as s:
+            r = s.post(url, data=payload)
+            if vector in r.text and vector not in unsanitized:
+                unsanitized.append(vector)
+
+    for exploit in unsanitized:
+        print(exploit + " - unsanitized on " + url)
+
+    print("============ " + str(len(unsanitized)) + " Unsanitized Inputs Discovered ============")
 
 def checkSensitiveData(sensitive):
     pass
