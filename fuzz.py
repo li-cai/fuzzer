@@ -1,6 +1,7 @@
 import sys
 import requests
 import bs4
+import random
 from urllib.parse import urlparse
 
 extensions = ['.html', '.jsp', '.php', '.asp', '.htm', '.css', '.js', '.dll']
@@ -9,8 +10,6 @@ pageurlparam = {}
 pageforminput = {}
 
 pages = []
-urlinput = []
-forminput = []
 
 def discover(url, netloc, words, query, response):
     """
@@ -23,19 +22,19 @@ def discover(url, netloc, words, query, response):
     pageforminput[url] = []
 
     print("\n================== Discovering Links... ==================")
-    count = scrapeLinks(response, url)
+    count = scrapeLinks(response, url, True)
     print("================== " + str(count) + " Links Discovered ==================")
 
     print("\n=================== Guessing Links... ===================")
-    count = guessLinks(url, words)
+    count = guessLinks(url, words, True)
     print("==================== " + str(count) + " Links Guessed ====================")
 
     print("\n================= Discovering Input... ==================") 
-    count = scrapeInput(response, url)
+    count = scrapeInput(response, url, True)
     print("================== " + str(count) + " Inputs Discovered ==================")
 
     print("\n=============== Parsing Input from URL... ===============")
-    count = parseInput(query, url)
+    count = parseInput(query, url, True)
     print("==================== " + str(count) + " Inputs Parsed ====================")
 
     print("\n=============== Discovering Cookies... ==================")
@@ -73,7 +72,7 @@ def authenticate(url, netloc, appname):
             return r
 
 
-def scrapeLinks(response, url):
+def scrapeLinks(response, url, toprint):
     """
     Parses the HTML to find all links.
     """
@@ -93,14 +92,16 @@ def scrapeLinks(response, url):
                 link = 'http:' + link
             elif link.find('http://') < 0 and link.find('https://') < 0:
                 link = newURL + link
-                # pages.append(link)
+                pages.append(link)
                 addLinkToDict(link, pageurlparam, pageforminput)
 
-            print(link)
+            if toprint:
+                print(link)
+
             count += 1
     return count
 
-def guessLinks(url, words):
+def guessLinks(url, words, toprint):
     """
     Attempts to guess valid links using the given list of common words.
     """
@@ -116,9 +117,10 @@ def guessLinks(url, words):
         response = requests.get(currURL)
         if (response.status_code == 200):
             count += 1
-            # pages.append(currURL)
+            pages.append(currURL)
             addLinkToDict(currURL, pageurlparam, pageforminput)
-            print(currURL)
+            if toprint:
+                print(currURL)
 
         for ext in extensions:
             currURL = newURL + word + ext
@@ -127,9 +129,10 @@ def guessLinks(url, words):
             response = requests.get(currURL)
             if (response.status_code == 200):
                 count += 1
+                pages.append(currURL)
                 addLinkToDict(currURL, pageurlparam, pageforminput)
-                print(currURL)
-
+                if toprint:
+                    print(currURL)
     return count
 
 
@@ -140,7 +143,7 @@ def addLinkToDict(link, dict1, dict2):
         pageurlparam[link] = []
 
 
-def scrapeInput(response, url):
+def scrapeInput(response, url, toprint):
     """
     Parses the HTML to find all input values and types.
     """
@@ -154,10 +157,11 @@ def scrapeInput(response, url):
         value = inpt.get('name')
         input_type = inpt.get('type')
 
-        if value:
-            print(value + " : " + str(input_type))
-        else:
-            print("input has no name : " + input_type)
+        if toprint:
+            if value:
+                print(value + " : " + str(input_type))
+            else:
+                print("input has no name : " + input_type)
 
         if url in pageforminput:
             pageforminput[url].append(value)
@@ -165,7 +169,8 @@ def scrapeInput(response, url):
         count += 1
     return count
 
-def parseInput(query, url):
+
+def parseInput(query, url, toprint):
     """
     Parses input from the given URL.
     """
@@ -176,11 +181,11 @@ def parseInput(query, url):
         qvalues = elem.split('=')
         if len(qvalues) > 1:
             count += 1
-            # urlinput.append(qvalues[0])
             if url in pageurlparam:
                 pageurlparam[url].append(qvalues[0])
 
-            print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
+            if toprint:
+                print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
     return count
 
 
@@ -201,17 +206,37 @@ def scrapeCookies(response):
     return count
 
 
-def test(url, response, vectors, sensitive, slow, random):
+def test(url, words, vectors, sensitive, slow, isRandom):
     print("\n\n================= FUZZ ROUND 2 - TEST! ==================")
 
-    print("\n============ Checking Input Sanitization... =============")
-    count = checkSanitizedInput(url, vectors)
-    print("============ " + str(count) + " Unsanitized Inputs Discovered ============")
+    # print("\n============ Checking Input Sanitization... =============")
+    count = 0
+    if not isRandom:
+        for urlkey in pages:
+            print("\n\n----------------------------------------------------------------------")
+            print(urlkey)
+            print("----------------------------------------------------------------------")
+            parsed = urlparse(urlkey)
+            response = requests.get(urlkey)
 
+            scrapeInput(response, urlkey, False)
+            parseInput(parsed.query, urlkey, False)
 
-def checkSanitizedInput(url, vectors):
-    inputs = pageforminput[url]
-    params = pageurlparam[url]
+            count += sendVectors(urlkey, vectors)
+    else:
+        randompage = random.choice(list(pageforminput.keys()))
+        count += sendVectors(randompage, vectors)
+
+    # print("============ " + str(count) + " Unsanitized Inputs Discovered ============")
+
+def sendVectors(url, vectors):
+    inputs = []
+    params = []
+
+    if url in pageforminput:
+        inputs = pageforminput[url]
+    if url in pageurlparam:
+        params = pageurlparam[url]
 
     unsanitized = []
 
@@ -231,21 +256,18 @@ def checkSanitizedInput(url, vectors):
 
         with requests.Session() as s:
             postresponse = s.post(url, data=payload)
-            if vector in postresponse.text and vector not in unsanitized:
-                unsanitized.append(vector)
+            if vector in postresponse.text:
+                print(vector + " : unsanitized with input = " + str(payload))
 
         for key in getpayload:
             getpayload[key] = vector
 
-        getresponse = requests.get(url, params=getpayload)
-        if vector in getresponse.text and vector not in unsanitized:
-            unsanitized.append(vector)
-
-    for exploit in unsanitized:
-        print(exploit + " : unsanitized on " + url)
+        if len(getpayload) > 0:
+            getresponse = requests.get(url, params=getpayload)
+            if vector in getresponse.text:
+                print(vector + " : unsanitized with input = " + str(getpayload))
 
     return len(unsanitized)
-    
 
 
 def checkSensitiveData(sensitive):
@@ -361,7 +383,7 @@ def main():
             printTestErrorMessage()
             return
         discover(url, netloc, words, parsed.query, response)            
-        test(url, response, vectors, sensitive, slow, random)
+        test(url, words, vectors, sensitive, slow, random)
     else:
         printErrorMessage()
 
