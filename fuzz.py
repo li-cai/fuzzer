@@ -241,7 +241,6 @@ def test(url, words, vectors, sensitive, slow, isRandom):
         for vulnerability in vulnerabilities:
             print(vulnerability)
 
-
     print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
 
@@ -301,16 +300,13 @@ def sendVectors(url, vectors, sensitive, slow):
 
 def checkSensitiveData(response, sensitive):
     sensitiveData = []
-    count = 0
     
     for word in sensitive:
         if word in response.text:
-            count = count + 1
             sensitiveData.append("Sensitive data discovered: " + word)
 
     return sensitiveData
           
-
 
 def slowResponse(response, slow):
     """
@@ -358,6 +354,7 @@ def loadFile(arg):
     except FileNotFoundError:
         print(filepath + " was not found.")
         return None
+
 
 def main():
     args = sys.argv

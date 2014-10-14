@@ -4,4 +4,5 @@ Root
 Table
 Stacktrace
 .class
-Strip
+stack trace
+compiler
