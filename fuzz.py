@@ -230,7 +230,14 @@ def test(url, words, vectors, sensitive, slow, isRandom):
                     print(vulnerability)
     else:
         randompage = random.choice(list(pageforminput.keys()))
-        count += sendVectors(randompage, vectors, slow)
+        vulnerabilities = sendVectors(randompage, vectors, slow)
+        count += len(vulnerabilities)
+
+        print("\n\n----------------------------------------------------------------------")
+        print(randompage)
+        print("----------------------------------------------------------------------")
+        for vulnerability in vulnerabilities:
+            print(vulnerability)
 
     print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
