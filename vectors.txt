@@ -4,10 +4,8 @@ OR 1=1
 ' OR '1'='1
 ; OR '1'='1'
 Admin' OR '
--1
 23 OR 1=1
 ' UNION SELECT *;--
 0x100
 %s%p%x%d
 .1024d
-
