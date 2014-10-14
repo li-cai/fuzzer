@@ -54,7 +54,7 @@ def authenticate(url, netloc, appname):
         }
 
         with requests.Session() as s:
-            s.post(netloc +'/login.php', data = payload)
+            s.post(netloc +'/dvwa/login.php', data = payload)
             r = s.get(url, allow_redirects=False)
             return r
 
@@ -218,8 +218,10 @@ def test(url, words, vectors, sensitive, slow, isRandom):
 
             scrapeInput(response, urlkey, False)
             parseInput(parsed.query, urlkey, False)
+            
+            checkSensitiveData(response, sensitive)
 
-            vulnerabilities = sendVectors(urlkey, vectors, slow)
+            vulnerabilities = sendVectors(urlkey, vectors, sensitive, slow)
             if len(vulnerabilities) > 0:
                 count += len(vulnerabilities)
 
@@ -239,10 +241,11 @@ def test(url, words, vectors, sensitive, slow, isRandom):
         for vulnerability in vulnerabilities:
             print(vulnerability)
 
+
     print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
 
-def sendVectors(url, vectors, slow):
+def sendVectors(url, vectors, sensitive, slow):
     inputs = []
     params = []
 
@@ -271,11 +274,19 @@ def sendVectors(url, vectors, slow):
             postresponse = s.post(url, data=payload)
             if vector in postresponse.text:
                 vulnerabilities.append(vector + " : unsanitized with input = " + str(payload))
-            #check sensitive data
-            if slowResponse(postresponse, slow):
-                vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + " milliseconds with input " + vector)
+
             if badHTTPCode(postresponse):
-                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + " with input " + vector)
+                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + \
+                                       " with input " + str(payload))
+                if len(payload) == 0:
+                    break;
+
+            sensitiveFound = checkSensitiveData(postresponse, sensitive)
+            vulnerabilities.extend(sensitiveFound)
+
+            if slowResponse(postresponse, slow):
+                vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + \
+                                       " milliseconds with input " + vector)
 
         for key in getpayload:
             getpayload[key] = vector
@@ -288,8 +299,17 @@ def sendVectors(url, vectors, slow):
     return vulnerabilities
 
 
-def checkSensitiveData(sensitive):
-    pass
+def checkSensitiveData(response, sensitive):
+    sensitiveData = []
+    count = 0
+    
+    for word in sensitive:
+        if word in response.text:
+            count = count + 1
+            sensitiveData.append("Sensitive data discovered: " + word)
+
+    return sensitiveData
+          
 
 
 def slowResponse(response, slow):
