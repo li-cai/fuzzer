@@ -53,3 +53,7 @@ considered "slow". Default is 500 milliseconds. (Optional)
 * `--random=[true|false]` - When false, input to each page is tried
 systematically. When true, a random page and random input field
 are chosen to test all vectors. Default is false. (Optional)
+
+### Examples
+* `fuzz discover http://localhost:8080 --common-words=mywords.txt`
+* `fuzz test http://localhost:8080/bodgeit --custom-auth=bodgeit --common-words=words.txt --vectors=vectors.txt --sensitive=sensitive.txt --random=false --slow=1000`

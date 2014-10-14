@@ -1,8 +1,9 @@
 MySQL
 password123
 Root
-Table
+HttpServlet
 Stacktrace
 .class
 stack trace
-compiler
+compile
+Exception

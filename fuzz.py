@@ -20,6 +20,7 @@ def discover(url, netloc, words, query, response):
 
     pageurlparam[url] = []
     pageforminput[url] = []
+    pages.append(url)
 
     print("\n================== Discovering Links... ==================")
     count = scrapeLinks(response, url, True)
@@ -124,8 +125,6 @@ def guessLinks(url, words, toprint):
 
         for ext in extensions:
             currURL = newURL + word + ext
-
-
             response = requests.get(currURL)
             if (response.status_code == 200):
                 count += 1
@@ -274,18 +273,19 @@ def sendVectors(url, vectors, sensitive, slow):
             if vector in postresponse.text:
                 vulnerabilities.append(vector + " : unsanitized with input = " + str(payload))
 
-            if badHTTPCode(postresponse):
-                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + \
-                                       " with input " + str(payload))
-                if len(payload) == 0:
-                    break;
-
             sensitiveFound = checkSensitiveData(postresponse, sensitive)
+
             vulnerabilities.extend(sensitiveFound)
 
             if slowResponse(postresponse, slow):
                 vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + \
                                        " milliseconds with input " + vector)
+
+            if badHTTPCode(postresponse):
+                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + \
+                                       " with input " + str(payload))
+                if len(payload) == 0:
+                    break;
 
         for key in getpayload:
             getpayload[key] = vector
