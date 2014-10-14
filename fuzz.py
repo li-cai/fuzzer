@@ -218,8 +218,10 @@ def test(url, words, vectors, sensitive, slow, isRandom):
 
             scrapeInput(response, urlkey, False)
             parseInput(parsed.query, urlkey, False)
+            
+            checkSensitiveData(response, sensitive)
 
-            vulnerabilities = sendVectors(urlkey, vectors, slow)
+            vulnerabilities = sendVectors(urlkey, vectors, sensitive, slow)
             if len(vulnerabilities) > 0:
                 count += len(vulnerabilities)
 
@@ -230,12 +232,13 @@ def test(url, words, vectors, sensitive, slow, isRandom):
                     print(vulnerability)
     else:
         randompage = random.choice(list(pageforminput.keys()))
-        count += sendVectors(randompage, vectors, slow)
+        vulnerabilities = sendVectors(randompage, vectors, sensitive, slow)
+        count += len(vulnerabilities)
 
     print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
 
-def sendVectors(url, vectors, slow):
+def sendVectors(url, vectors, sensitive, slow):
     inputs = []
     params = []
 
@@ -264,7 +267,10 @@ def sendVectors(url, vectors, slow):
             postresponse = s.post(url, data=payload)
             if vector in postresponse.text:
                 vulnerabilities.append(vector + " : unsanitized with input = " + str(payload))
-            #check sensitive data
+
+            sensitiveFound = checkSensitiveData(postresponse, sensitive)
+            vulnerabilities.extend(sensitiveFound)
+
             if slowResponse(postresponse, slow):
                 vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + " milliseconds with input " + vector)
             if badHTTPCode(postresponse):
@@ -281,8 +287,17 @@ def sendVectors(url, vectors, slow):
     return vulnerabilities
 
 
-def checkSensitiveData(sensitive):
-    pass
+def checkSensitiveData(response, sensitive):
+    sensitiveData = []
+    count = 0
+    
+    for word in sensitive:
+        if word in response.text
+            count = count + 1
+            sensitiveData.append("Sensitive data discovered: " + word)
+
+    return sensitiveData
+          
 
 
 def slowResponse(response, slow):
