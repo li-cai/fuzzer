@@ -54,7 +54,7 @@ def authenticate(url, netloc, appname):
         }
 
         with requests.Session() as s:
-            s.post(netloc +'/login.php', data = payload)
+            s.post(netloc +'/dvwa/login.php', data = payload)
             r = s.get(url, allow_redirects=False)
             return r
 
@@ -292,7 +292,7 @@ def checkSensitiveData(response, sensitive):
     count = 0
     
     for word in sensitive:
-        if word in response.text
+        if word in response.text:
             count = count + 1
             sensitiveData.append("Sensitive data discovered: " + word)
 
