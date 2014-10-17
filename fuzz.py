@@ -54,10 +54,10 @@ def authenticate(url, netloc, appname):
             'Login':'Login'
         }
 
-        with requests.Session() as s:
-            s.post(netloc +'/dvwa/login.php', data = payload)
-            r = s.get(url, allow_redirects=False)
-            return r
+        with requests.Session() as session:
+            session.post(netloc +'/dvwa/login.php', data = payload)
+            # r = s.get(url, allow_redirects=False)
+            return session
 
     elif appname == 'bodgeit':
         payload = {
@@ -67,10 +67,10 @@ def authenticate(url, netloc, appname):
             'submit': 'submit'
         }
 
-        with requests.Session() as s:
-            s.post(netloc + '/register.jsp', data=payload)
-            r = s.get(url, allow_redirects=False)
-            return r
+        with requests.Session() as session:
+            session.post(netloc + '/register.jsp', data=payload)
+            # r = s.get(url, allow_redirects=False)
+            return session
 
 
 def scrapeLinks(response, url, toprint):
@@ -185,12 +185,15 @@ def parseInput(query, url, toprint):
 
             if toprint:
                 print("Input: " + qvalues[0] + ", Value: " + qvalues[1])
+        else:
+            pageurlparam[url] = []
+
     return count
 
 
 def scrapeCookies(response):
     """
-    Discovers cookies for the given url"
+    Discovers cookies for the given url
     """
     # Get cookies
     cookies = response.cookies
@@ -205,33 +208,33 @@ def scrapeCookies(response):
     return count
 
 
-def test(url, words, vectors, sensitive, slow, isRandom):
-    print("\n\n================= FUZZ ROUND 2 - TEST! ==================")
+def test(session, url, words, vectors, sensitive, slow, isRandom):
+    print("\n\n======================== FUZZ ROUND 2 - TEST! ========================")
 
     count = 0
     if not isRandom:
         for urlkey in pages:
 
             parsed = urlparse(urlkey)
-            response = requests.get(urlkey)
+            response = session.get(urlkey, allow_redirects=False)
 
             scrapeInput(response, urlkey, False)
             parseInput(parsed.query, urlkey, False)
-            
-            checkSensitiveData(response, sensitive)
 
-            vulnerabilities = sendVectors(urlkey, vectors, sensitive, slow)
+            vulnerabilities = sendVectors(session, urlkey, vectors, sensitive, slow)
+
             if len(vulnerabilities) > 0:
                 count += len(vulnerabilities)
 
                 print("\n\n----------------------------------------------------------------------")
                 print(urlkey)
+                print("form inputs = " + str(pageforminput[urlkey]))
                 print("----------------------------------------------------------------------")
                 for vulnerability in vulnerabilities:
                     print(vulnerability)
     else:
         randompage = random.choice(list(pageforminput.keys()))
-        vulnerabilities = sendVectors(randompage, vectors, slow)
+        vulnerabilities = sendVectors(session, randompage, vectors, sensitive, slow)
         count += len(vulnerabilities)
 
         print("\n\n----------------------------------------------------------------------")
@@ -243,7 +246,7 @@ def test(url, words, vectors, sensitive, slow, isRandom):
     print("\n\n============ " + str(count) + " Potential Vulnerabilities Discovered ============")
 
 
-def sendVectors(url, vectors, sensitive, slow):
+def sendVectors(session, url, vectors, sensitive, slow):
     inputs = []
     params = []
 
@@ -268,24 +271,22 @@ def sendVectors(url, vectors, sensitive, slow):
         for key in payload:
             payload[key] = vector
 
-        with requests.Session() as s:
-            postresponse = s.post(url, data=payload)
-            if vector in postresponse.text:
-                vulnerabilities.append(vector + " : unsanitized with input = " + str(payload))
+        postresponse = session.post(url, data=payload)
 
-            sensitiveFound = checkSensitiveData(postresponse, sensitive)
+        if vector in postresponse.text:
+            vulnerabilities.append("Unsanitized vector discovered: " + vector)
 
-            vulnerabilities.extend(sensitiveFound)
+        sensitiveFound = checkSensitiveData(postresponse, sensitive, vector)
 
-            if slowResponse(postresponse, slow):
-                vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + \
-                                       " milliseconds with input " + vector)
+        vulnerabilities.extend(sensitiveFound)
 
-            if badHTTPCode(postresponse):
-                vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + \
-                                       " with input " + str(payload))
-                if len(payload) == 0:
-                    break;
+        if slowResponse(postresponse, slow):
+            vulnerabilities.append("Delayed Reponse time detected: over " + str(slow) + \
+                                   " milliseconds with vector " + vector)
+
+        if badHTTPCode(postresponse):
+            vulnerabilities.append("Bad HTTP Response Code : " + str(postresponse.status_code) + \
+                                   " with vector " + vector)
 
         for key in getpayload:
             getpayload[key] = vector
@@ -295,15 +296,19 @@ def sendVectors(url, vectors, sensitive, slow):
             if vector in getresponse.text:
                 vulnerabilities.append(vector + " : unsanitized")
 
+        if len(payload) == 0:
+            break;
+
     return vulnerabilities
 
 
-def checkSensitiveData(response, sensitive):
+def checkSensitiveData(response, sensitive, vector):
     sensitiveData = []
-    
+    sensitiveTrack = []
     for word in sensitive:
-        if word in response.text:
-            sensitiveData.append("Sensitive data discovered: " + word)
+        if word in response.text and word not in sensitiveTrack:
+            sensitiveData.append("Sensitive data discovered: " + word + \
+                                 " with vector " + vector)
 
     return sensitiveData
           
@@ -373,14 +378,21 @@ def main():
         print("Please enter a valid URL starting with 'http://'")
         return
 
+    authSession = requests.Session()
+    print(authSession)
+
     if "--custom-auth=bodgeit" in args:
-        temp = authenticate(url, netloc, "bodgeit")
+        authSession = authenticate(url, netloc, "bodgeit")
+        temp = authSession.get(url, allow_redirects=False)
         if temp.status_code == 200:
             response = temp
     elif "--custom-auth=dvwa" in args:
-        temp = authenticate(url, netloc, "dvwa")
+        authSession = authenticate(url, netloc, "dvwa")
+        temp = authSession.get(url, allow_redirects=False)
         if temp.status_code == 200:
             response = temp
+
+    print(authSession)
 
     slow = 500
     random = False
@@ -418,7 +430,7 @@ def main():
             printTestErrorMessage()
             return
         discover(url, netloc, words, parsed.query, response)            
-        test(url, words, vectors, sensitive, slow, random)
+        test(authSession, url, words, vectors, sensitive, slow, random)
     else:
         printErrorMessage()
 
